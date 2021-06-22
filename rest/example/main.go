@@ -5,11 +5,13 @@ import (
 	"fmt"
 
 	hierarchy "github.com/SKF/go-hierarchy-v2-client/rest"
+
 	"github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/go-rest-utility/client/auth"
 	"github.com/SKF/go-utility/v2/auth/secretsmanagerauth"
 	"github.com/SKF/go-utility/v2/stages"
 	"github.com/aws/aws-sdk-go/aws/session"
+	dd_http "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 const serviceName = "example-service"
@@ -26,8 +28,7 @@ func main() {
 	client := hierarchy.NewClient(
 		hierarchy.WithStage(stages.StageSandbox),
 		hierarchy.WithClientID(clientID),
-		hierarchy.WithStage(stages.StageSandbox),
-		client.WithDatadogTracing(serviceName),
+		client.WithDatadogTracing(dd_http.RTWithServiceName(serviceName)),
 		client.WithTokenProvider(&auth.SecretsManagerTokenProvider{
 			Config: secretsmanagerauth.Config{
 				WithDatadogTracing:       true,
