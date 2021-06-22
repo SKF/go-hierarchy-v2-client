@@ -65,6 +65,11 @@ func (c *HierarchyClientMock) GetSubtree(ctx context.Context, id uuid.UUID, filt
 	return args.Get(0).(models.GetSubtreeResponse), args.Error(1)
 }
 
+func (c *HierarchyClientMock) GetWholeSubtree(ctx context.Context, id uuid.UUID, filter rest.TreeFilter) (models.GetSubtreeResponse, error) {
+	args := c.Called(ctx, id, filter)
+	return args.Get(0).(models.GetSubtreeResponse), args.Error(1)
+}
+
 func (c *HierarchyClientMock) GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (models.GetSubtreeCountResponse, error) {
 	args := c.Called(ctx, id, nodeTypes)
 	return args.Get(0).(models.GetSubtreeCountResponse), args.Error(1)
@@ -97,6 +102,26 @@ func (c *HierarchyClientMock) GetProviderNodeIDs(ctx context.Context, provider, 
 
 func (c *HierarchyClientMock) GetProviderNodeIDsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
 	args := c.Called(ctx, provider, originType, continuationToken, limit)
+	return args.Get(0).(models.GetNodesByPartialOriginResponse), args.Error(1)
+}
+
+func (c *HierarchyClientMock) GetAllOrigins(ctx context.Context, provider string) (models.GetOriginsResponse, error) {
+	args := c.Called(ctx, provider)
+	return args.Get(0).(models.GetOriginsResponse), args.Error(1)
+}
+
+func (c *HierarchyClientMock) GetAllOriginsByType(ctx context.Context, provider, originType string) (models.GetOriginsResponse, error) {
+	args := c.Called(ctx, provider, originType)
+	return args.Get(0).(models.GetOriginsResponse), args.Error(1)
+}
+
+func (c *HierarchyClientMock) GetAllProviderNodeIDs(ctx context.Context, provider string) (models.GetNodesByPartialOriginResponse, error) {
+	args := c.Called(ctx, provider)
+	return args.Get(0).(models.GetNodesByPartialOriginResponse), args.Error(1)
+}
+
+func (c *HierarchyClientMock) GetAllProviderNodeIDsByType(ctx context.Context, provider, originType string) (models.GetNodesByPartialOriginResponse, error) {
+	args := c.Called(ctx, provider, originType)
 	return args.Get(0).(models.GetNodesByPartialOriginResponse), args.Error(1)
 }
 
