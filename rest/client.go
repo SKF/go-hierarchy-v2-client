@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/SKF/go-hierarchy-client/rest/models"
+	"github.com/SKF/go-hierarchy-v2-client/rest/models"
 
 	rest "github.com/SKF/go-rest-utility/client"
-
 	"github.com/SKF/go-utility/v2/stages"
 	"github.com/SKF/go-utility/v2/uuid"
 )
@@ -19,40 +18,50 @@ type TreeFilter struct {
 	MetadataKey   string
 	MetadataValue string
 	NodeTypes     []string
+	ModifiedAfter string
 }
 
 type HierarchyClient interface {
-	GetNode(ctx context.Context, id uuid.UUID) (models.Node, error)
-	CreateNode(ctx context.Context, node models.WebmodelsNodeInput) (uuid.UUID, error)
-	UpdateNode(ctx context.Context, id uuid.UUID, node models.WebmodelsNodeInput) (models.Node, error)
+	GetNode(ctx context.Context, id uuid.UUID) (models.GetNodeResponse, error)
+	CreateNode(ctx context.Context, node models.CreateNodeRequest) (models.CreateNodeResponse, error)
+	UpdateNode(ctx context.Context, id uuid.UUID, node models.UpdateNodeRequest) (models.UpdateNodeResponse, error)
 	DeleteNode(ctx context.Context, id uuid.UUID) error
-	DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID) (uuid.UUID, error)
+	DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID, suffix string) (models.DuplicateNodeResponse, error)
 
-	GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error)
-	GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error)
-	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error)
-	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error)
+	GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) (models.GetAncestorsResponse, error)
+	GetCompany(ctx context.Context, id uuid.UUID) (models.GetCompanyResponse, error)
+	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error)
+	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (models.GetSubtreeCountResponse, error)
 
-	GetOrigins(ctx context.Context, provider string) ([]models.Origin, error)
-	GetOriginsByType(ctx context.Context, provider, originType string) ([]models.Origin, error)
-	GetProviderNodeIDs(ctx context.Context, provider string) ([]uuid.UUID, error)
-	GetProviderNodeIDsByType(ctx context.Context, provider, originType string) ([]uuid.UUID, error)
-	GetOriginNodeID(ctx context.Context, origin models.Origin) (uuid.UUID, error)
+	LockNode(ctx context.Context, id uuid.UUID, recursive bool) error
+	UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error
+
+	GetOrigins(ctx context.Context, provider, continuationToken string, limit int) (models.GetOriginsResponse, error)
+	GetOriginsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetOriginsResponse, error)
+	GetProviderNodeIDs(ctx context.Context, provider, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error)
+	GetProviderNodeIDsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error)
+	GetOriginNodeID(ctx context.Context, origin models.Origin) (models.GetNodeByOriginResponse, error)
 }
 
 type client struct {
 	*rest.Client
+	clientID string
 }
 
 func WithStage(stage string) rest.Option {
 	if stage == stages.StageProd {
-		return rest.WithBaseURL("https://api.hierarchy.enlight.skf.com")
+		return rest.WithBaseURL("https://api.hierarchy.enlight.skf.com/v2/")
 	}
 
-	return rest.WithBaseURL(fmt.Sprintf("https://api.%s.hierarchy.enlight.skf.com", stage))
+	return rest.WithBaseURL(fmt.Sprintf("https://api.%s.hierarchy.enlight.skf.com/v2/", stage))
 }
 
-func NewClient(opts ...rest.Option) HierarchyClient {
+func WithClientID(clientID string) rest.Option {
+	clientHeader := "X-Client-Id"
+	return rest.WithDefaultHeader(clientHeader, clientID)
+}
+
+func NewClient(clientID string, opts ...rest.Option) HierarchyClient {
 	restClient := rest.NewClient(
 		append([]rest.Option{
 			// Defaults to production stage if no option is supplied
@@ -60,47 +69,47 @@ func NewClient(opts ...rest.Option) HierarchyClient {
 		}, opts...)...,
 	)
 
-	return &client{Client: restClient}
+	return &client{Client: restClient, clientID: clientID}
 }
 
-func (c *client) GetNode(ctx context.Context, id uuid.UUID) (models.Node, error) {
+func (c *client) GetNode(ctx context.Context, id uuid.UUID) (models.GetNodeResponse, error) {
 	request := rest.Get("nodes/{node}").
 		Assign("node", id).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNode
+	var response models.GetNodeResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return models.Node{}, err
+		return models.GetNodeResponse{}, err
 	}
 
-	return response.Node, nil
+	return response, nil
 }
 
-func (c *client) CreateNode(ctx context.Context, node models.WebmodelsNodeInput) (uuid.UUID, error) {
+func (c *client) CreateNode(ctx context.Context, node models.CreateNodeRequest) (models.CreateNodeResponse, error) {
 	request := rest.Post("nodes").
 		WithJSONPayload(node).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodeID
+	var response models.CreateNodeResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return uuid.EmptyUUID, err
+		return models.CreateNodeResponse{}, err
 	}
 
-	return response.NodeID, nil
+	return response, nil
 }
 
-func (c *client) UpdateNode(ctx context.Context, id uuid.UUID, node models.WebmodelsNodeInput) (models.Node, error) {
-	request := rest.Put("nodes/{node}").
+func (c *client) UpdateNode(ctx context.Context, id uuid.UUID, node models.UpdateNodeRequest) (models.UpdateNodeResponse, error) {
+	request := rest.Patch("nodes/{node}").
 		Assign("node", id).
 		WithJSONPayload(node).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNode
+	var response models.UpdateNodeResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return models.Node{}, err
+		return models.UpdateNodeResponse{}, err
 	}
 
-	return response.Node, nil
+	return response, nil
 }
 
 func (c *client) DeleteNode(ctx context.Context, id uuid.UUID) (err error) {
@@ -113,50 +122,51 @@ func (c *client) DeleteNode(ctx context.Context, id uuid.UUID) (err error) {
 	return
 }
 
-func (c *client) DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID) (uuid.UUID, error) {
-	request := rest.Post("nodes/{node}/duplicate{?dstParentNodeId}").
+func (c *client) DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID, suffix string) (models.DuplicateNodeResponse, error) {
+	request := rest.Post("nodes/{node}/duplicate{?dstParentNodeId,label_suffix}").
 		Assign("node", source).
 		Assign("dstParentNodeId", destination).
+		Assign("label_suffix", suffix).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodeID
+	var response models.DuplicateNodeResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return uuid.EmptyUUID, err
+		return models.DuplicateNodeResponse{}, err
 	}
 
-	return response.NodeID, nil
+	return response, nil
 }
 
-func (c *client) GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error) {
+func (c *client) GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) (models.GetAncestorsResponse, error) {
 	request := rest.Get("nodes/{node}/ancestors{?height,type*}").
 		Assign("node", id).
 		Assign("height", height).
 		Assign("type", nodeTypes).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodes
+	var response models.GetAncestorsResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return nil, err
+		return models.GetAncestorsResponse{}, err
 	}
 
-	return response.Nodes, nil
+	return response, nil
 }
 
-func (c *client) GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error) {
+func (c *client) GetCompany(ctx context.Context, id uuid.UUID) (models.GetCompanyResponse, error) {
 	request := rest.Get("nodes/{node}/company").
 		Assign("node", id).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNode
+	var response models.GetCompanyResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return models.Node{}, err
+		return models.GetCompanyResponse{}, err
 	}
 
-	return response.Node, nil
+	return response, nil
 }
 
-func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error) {
-	request := rest.Get("nodes/{node}/subtree{?depth,limit,offset,metadata_key,metadata_value,type*}").
+func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
+	request := rest.Get("nodes/{node}/subtree{?depth,limit,offset,metadata_key,metadata_value,continuation_token,type*}").
 		Assign("node", id).
 		Assign("depth", filter.Depth).
 		Assign("limit", filter.Limit).
@@ -164,125 +174,126 @@ func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter
 		Assign("metadata_key", filter.MetadataKey).
 		Assign("metadata_value", filter.MetadataValue).
 		Assign("type", filter.NodeTypes).
+		Assign("continuation_token", continuationToken).
+		Assign("modified_after", filter.ModifiedAfter).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodes
+	var response models.GetSubtreeResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return nil, err
+		return models.GetSubtreeResponse{}, err
 	}
 
-	return response.Nodes, nil
+	return response, nil
 }
 
-func (c *client) GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error) {
+func (c *client) GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (models.GetSubtreeCountResponse, error) {
 	request := rest.Get("nodes/{node}/subtree/count{?type*}").
 		Assign("node", id).
 		Assign("type", nodeTypes).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodeCount
+	var response models.GetSubtreeCountResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return 0, err
+		return models.GetSubtreeCountResponse{}, err
 	}
 
-	return response.NodeCount, nil
+	return response, nil
 }
 
-func (c *client) GetOrigins(ctx context.Context, provider string) ([]models.Origin, error) {
-	request := rest.Get("origin/{provider}").
+func (c *client) GetOrigins(ctx context.Context, provider, continuationToken string, limit int) (models.GetOriginsResponse, error) {
+	request := rest.Get("origin/{provider,continuation_token,limit}").
 		Assign("provider", provider).
+		Assign("continuation_token", continuationToken).
+		Assign("limit", limit).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsOrigins
+	var response models.GetOriginsResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return nil, err
+		return models.GetOriginsResponse{}, err
 	}
 
-	origins := make([]models.Origin, 0, len(response.Origins))
-
-	// Dereference all possible null values from response
-	for _, origin := range response.Origins {
-		if origin != nil {
-			origins = append(origins, *origin)
-		}
-	}
-
-	return origins, nil
+	return response, nil
 }
 
-func (c *client) GetOriginsByType(ctx context.Context, provider, originType string) ([]models.Origin, error) {
+func (c *client) GetOriginsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetOriginsResponse, error) {
 	request := rest.Get("origin/{provider}/{type}").
 		Assign("provider", provider).
 		Assign("type", originType).
+		Assign("continuation_token", continuationToken).
+		Assign("limit", limit).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsOrigins
+	var response models.GetOriginsResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return nil, err
+		return models.GetOriginsResponse{}, err
 	}
 
-	origins := make([]models.Origin, 0, len(response.Origins))
-
-	// Dereference all possible null values from response
-	for _, origin := range response.Origins {
-		if origin != nil {
-			origins = append(origins, *origin)
-		}
-	}
-
-	return origins, nil
+	return response, nil
 }
 
-func (c *client) GetProviderNodeIDs(ctx context.Context, provider string) ([]uuid.UUID, error) {
+func (c *client) GetProviderNodeIDs(ctx context.Context, provider, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
 	request := rest.Get("origin/{provider}/nodes").
 		Assign("provider", provider).
+		Assign("continuation_token", continuationToken).
+		Assign("limit", limit).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodeIDs
+	var response models.GetNodesByPartialOriginResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return nil, err
+		return models.GetNodesByPartialOriginResponse{}, err
 	}
 
-	// Hierarchy swagger does not tell the model generator that it is an array of UUIDs
-	nodeIDs := make([]uuid.UUID, len(response.NodeIds))
-	for _, s := range response.NodeIds {
-		nodeIDs = append(nodeIDs, uuid.UUID(s))
-	}
-
-	return nodeIDs, nil
+	return response, nil
 }
 
-func (c *client) GetProviderNodeIDsByType(ctx context.Context, provider, originType string) ([]uuid.UUID, error) {
+func (c *client) GetProviderNodeIDsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
 	request := rest.Get("origin/{provider}/{type}/nodes").
 		Assign("provider", provider).
 		Assign("type", originType).
+		Assign("continuation_token", continuationToken).
+		Assign("limit", limit).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodeIDs
+	var response models.GetNodesByPartialOriginResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return nil, err
+		return models.GetNodesByPartialOriginResponse{}, err
 	}
 
-	// Hierarchy swagger does not tell the model generator that it is an array of UUIDs
-	nodeIDs := make([]uuid.UUID, len(response.NodeIds))
-	for _, s := range response.NodeIds {
-		nodeIDs = append(nodeIDs, uuid.UUID(s))
-	}
-
-	return nodeIDs, nil
+	return response, nil
 }
 
-func (c *client) GetOriginNodeID(ctx context.Context, origin models.Origin) (uuid.UUID, error) {
+func (c *client) GetOriginNodeID(ctx context.Context, origin models.Origin) (models.GetNodeByOriginResponse, error) {
 	request := rest.Get("origin/{provider}/{type}/{id}/nodes").
 		Assign("provider", origin.Provider).
 		Assign("type", origin.Type).
 		Assign("id", origin.ID).
 		SetHeader("Accept", "application/json")
 
-	var response models.WebmodelsNodeID
+	var response models.GetNodeByOriginResponse
 	if err := c.DoAndUnmarshal(ctx, request, &response); err != nil {
-		return uuid.EmptyUUID, err
+		return models.GetNodeByOriginResponse{}, err
 	}
 
-	return response.NodeID, nil
+	return response, nil
+}
+
+func (c *client) LockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
+	request := rest.Put("nodes/{node}/lock?recursive={recursive}").
+		Assign("node", id).
+		Assign("recursive", recursive).
+		SetHeader("Accept", "application/json")
+
+	_, err := c.Do(ctx, request)
+
+	return err
+}
+func (c *client) UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
+	request := rest.Delete("nodes/{node}/lock?recursive={recursive}").
+		Assign("node", id).
+		Assign("recursive", recursive).
+		SetHeader("Accept", "application/json")
+
+	_, err := c.Do(ctx, request)
+
+	return err
 }
