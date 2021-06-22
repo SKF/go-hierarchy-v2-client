@@ -45,7 +45,6 @@ type HierarchyClient interface {
 
 type client struct {
 	*rest.Client
-	clientID string
 }
 
 func WithStage(stage string) rest.Option {
@@ -61,7 +60,7 @@ func WithClientID(clientID string) rest.Option {
 	return rest.WithDefaultHeader(clientHeader, clientID)
 }
 
-func NewClient(clientID string, opts ...rest.Option) HierarchyClient {
+func NewClient(opts ...rest.Option) HierarchyClient {
 	restClient := rest.NewClient(
 		append([]rest.Option{
 			// Defaults to production stage if no option is supplied
@@ -69,7 +68,7 @@ func NewClient(clientID string, opts ...rest.Option) HierarchyClient {
 		}, opts...)...,
 	)
 
-	return &client{Client: restClient, clientID: clientID}
+	return &client{Client: restClient}
 }
 
 func (c *client) GetNode(ctx context.Context, id uuid.UUID) (models.GetNodeResponse, error) {
