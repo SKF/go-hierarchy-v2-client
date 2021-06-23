@@ -3,6 +3,7 @@ package gohierarchyclient
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/SKF/go-hierarchy-v2-client/rest/models"
 
@@ -30,21 +31,16 @@ type HierarchyClient interface {
 
 	GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) (models.GetAncestorsResponse, error)
 	GetCompany(ctx context.Context, id uuid.UUID) (models.GetCompanyResponse, error)
-	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error)
-	GetWholeSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) (models.GetSubtreeResponse, error)
+	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) (models.GetSubtreeResponse, error)
 	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (models.GetSubtreeCountResponse, error)
 
 	LockNode(ctx context.Context, id uuid.UUID, recursive bool) error
 	UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error
 
-	GetOrigins(ctx context.Context, provider, continuationToken string, limit int) (models.GetOriginsResponse, error)
-	GetOriginsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetOriginsResponse, error)
-	GetProviderNodeIDs(ctx context.Context, provider, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error)
-	GetProviderNodeIDsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error)
-	GetAllOrigins(ctx context.Context, provider string) (models.GetOriginsResponse, error)
-	GetAllOriginsByType(ctx context.Context, provider, originType string) (models.GetOriginsResponse, error)
-	GetAllProviderNodeIDs(ctx context.Context, provider string) (models.GetNodesByPartialOriginResponse, error)
-	GetAllProviderNodeIDsByType(ctx context.Context, provider, originType string) (models.GetNodesByPartialOriginResponse, error)
+	GetOrigins(ctx context.Context, provider string) (models.GetOriginsResponse, error)
+	GetOriginsByType(ctx context.Context, provider, originType string) (models.GetOriginsResponse, error)
+	GetProviderNodeIDs(ctx context.Context, provider string) (models.GetNodesByPartialOriginResponse, error)
+	GetProviderNodeIDsByType(ctx context.Context, provider, originType string) (models.GetNodesByPartialOriginResponse, error)
 	GetOriginNodeID(ctx context.Context, origin models.Origin) (models.GetNodeByOriginResponse, error)
 }
 
@@ -169,7 +165,7 @@ func (c *client) GetCompany(ctx context.Context, id uuid.UUID) (models.GetCompan
 	return response, nil
 }
 
-func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
+func (c *client) getSubtreePage(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
 	request := rest.Get("nodes/{node}/subtree{?depth,limit,offset,metadata_key,metadata_value,continuation_token,type*}").
 		Assign("node", id).
 		Assign("depth", filter.Depth).
@@ -190,8 +186,8 @@ func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter
 	return response, nil
 }
 
-func (c *client) GetWholeSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) (models.GetSubtreeResponse, error) {
-	response, err := c.GetSubtree(ctx, id, filter, "")
+func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) (models.GetSubtreeResponse, error) {
+	response, err := c.getSubtreePage(ctx, id, filter, "")
 	if err != nil {
 		return models.GetSubtreeResponse{}, err
 	}
@@ -199,7 +195,12 @@ func (c *client) GetWholeSubtree(ctx context.Context, id uuid.UUID, filter TreeF
 	nodes := response.Nodes
 
 	for response.Links != nil && response.Links.Next != "" {
-		response, err = c.GetSubtree(ctx, id, filter, response.Links.Next)
+		continuationToken, err := getContinuationToken(response.Links.Next)
+		if err != nil {
+			return models.GetSubtreeResponse{}, err
+		}
+
+		response, err = c.getSubtreePage(ctx, id, filter, continuationToken)
 		if err != nil {
 			return models.GetSubtreeResponse{}, err
 		}
@@ -225,7 +226,7 @@ func (c *client) GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ..
 	return response, nil
 }
 
-func (c *client) GetOrigins(ctx context.Context, provider, continuationToken string, limit int) (models.GetOriginsResponse, error) {
+func (c *client) getOriginsPage(ctx context.Context, provider, continuationToken string, limit int) (models.GetOriginsResponse, error) {
 	request := rest.Get("origin/{provider,continuation_token,limit}").
 		Assign("provider", provider).
 		Assign("continuation_token", continuationToken).
@@ -240,8 +241,8 @@ func (c *client) GetOrigins(ctx context.Context, provider, continuationToken str
 	return response, nil
 }
 
-func (c *client) GetAllOrigins(ctx context.Context, provider string) (models.GetOriginsResponse, error) {
-	response, err := c.GetOrigins(ctx, provider, "", 0)
+func (c *client) GetOrigins(ctx context.Context, provider string) (models.GetOriginsResponse, error) {
+	response, err := c.getOriginsPage(ctx, provider, "", 0)
 	if err != nil {
 		return models.GetOriginsResponse{}, err
 	}
@@ -249,7 +250,12 @@ func (c *client) GetAllOrigins(ctx context.Context, provider string) (models.Get
 	origins := response.Origins
 
 	for response.Links != nil && response.Links.Next != "" {
-		response, err = c.GetOrigins(ctx, provider, response.Links.Next, 0)
+		continuationToken, err := getContinuationToken(response.Links.Next)
+		if err != nil {
+			return models.GetOriginsResponse{}, err
+		}
+
+		response, err = c.getOriginsPage(ctx, provider, continuationToken, 0)
 		if err != nil {
 			return models.GetOriginsResponse{}, err
 		}
@@ -261,7 +267,7 @@ func (c *client) GetAllOrigins(ctx context.Context, provider string) (models.Get
 	return response, nil
 }
 
-func (c *client) GetOriginsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetOriginsResponse, error) {
+func (c *client) getOriginsByTypePage(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetOriginsResponse, error) {
 	request := rest.Get("origin/{provider}/{type}").
 		Assign("provider", provider).
 		Assign("type", originType).
@@ -277,8 +283,8 @@ func (c *client) GetOriginsByType(ctx context.Context, provider, originType, con
 	return response, nil
 }
 
-func (c *client) GetAllOriginsByType(ctx context.Context, provider, originType string) (models.GetOriginsResponse, error) {
-	response, err := c.GetOriginsByType(ctx, provider, originType, "", 0)
+func (c *client) GetOriginsByType(ctx context.Context, provider, originType string) (models.GetOriginsResponse, error) {
+	response, err := c.getOriginsByTypePage(ctx, provider, originType, "", 0)
 	if err != nil {
 		return models.GetOriginsResponse{}, err
 	}
@@ -286,7 +292,12 @@ func (c *client) GetAllOriginsByType(ctx context.Context, provider, originType s
 	origins := response.Origins
 
 	for response.Links != nil && response.Links.Next != "" {
-		response, err = c.GetOriginsByType(ctx, provider, originType, response.Links.Next, 0)
+		continuationToken, err := getContinuationToken(response.Links.Next)
+		if err != nil {
+			return models.GetOriginsResponse{}, err
+		}
+
+		response, err = c.getOriginsByTypePage(ctx, provider, originType, continuationToken, 0)
 		if err != nil {
 			return models.GetOriginsResponse{}, err
 		}
@@ -298,7 +309,7 @@ func (c *client) GetAllOriginsByType(ctx context.Context, provider, originType s
 	return response, nil
 }
 
-func (c *client) GetProviderNodeIDs(ctx context.Context, provider, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
+func (c *client) getProviderNodeIDsPage(ctx context.Context, provider, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
 	request := rest.Get("origin/{provider}/nodes").
 		Assign("provider", provider).
 		Assign("continuation_token", continuationToken).
@@ -313,8 +324,8 @@ func (c *client) GetProviderNodeIDs(ctx context.Context, provider, continuationT
 	return response, nil
 }
 
-func (c *client) GetAllProviderNodeIDs(ctx context.Context, provider string) (models.GetNodesByPartialOriginResponse, error) {
-	response, err := c.GetProviderNodeIDs(ctx, provider, "", 0)
+func (c *client) GetProviderNodeIDs(ctx context.Context, provider string) (models.GetNodesByPartialOriginResponse, error) {
+	response, err := c.getProviderNodeIDsPage(ctx, provider, "", 0)
 	if err != nil {
 		return models.GetNodesByPartialOriginResponse{}, err
 	}
@@ -322,7 +333,12 @@ func (c *client) GetAllProviderNodeIDs(ctx context.Context, provider string) (mo
 	nodeIDs := response.NodeIds
 
 	for response.Links != nil && response.Links.Next != "" {
-		response, err = c.GetProviderNodeIDs(ctx, provider, response.Links.Next, 0)
+		continuationToken, err := getContinuationToken(response.Links.Next)
+		if err != nil {
+			return models.GetNodesByPartialOriginResponse{}, err
+		}
+
+		response, err = c.getProviderNodeIDsPage(ctx, provider, continuationToken, 0)
 		if err != nil {
 			return models.GetNodesByPartialOriginResponse{}, err
 		}
@@ -334,7 +350,7 @@ func (c *client) GetAllProviderNodeIDs(ctx context.Context, provider string) (mo
 	return response, nil
 }
 
-func (c *client) GetProviderNodeIDsByType(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
+func (c *client) getProviderNodeIDsByTypePage(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
 	request := rest.Get("origin/{provider}/{type}/nodes").
 		Assign("provider", provider).
 		Assign("type", originType).
@@ -350,8 +366,8 @@ func (c *client) GetProviderNodeIDsByType(ctx context.Context, provider, originT
 	return response, nil
 }
 
-func (c *client) GetAllProviderNodeIDsByType(ctx context.Context, provider, originType string) (models.GetNodesByPartialOriginResponse, error) {
-	response, err := c.GetProviderNodeIDsByType(ctx, provider, originType, "", 0)
+func (c *client) GetProviderNodeIDsByType(ctx context.Context, provider, originType string) (models.GetNodesByPartialOriginResponse, error) {
+	response, err := c.getProviderNodeIDsByTypePage(ctx, provider, originType, "", 0)
 	if err != nil {
 		return models.GetNodesByPartialOriginResponse{}, err
 	}
@@ -359,7 +375,12 @@ func (c *client) GetAllProviderNodeIDsByType(ctx context.Context, provider, orig
 	nodeIDs := response.NodeIds
 
 	for response.Links != nil && response.Links.Next != "" {
-		response, err = c.GetProviderNodeIDsByType(ctx, provider, originType, response.Links.Next, 0)
+		continuationToken, err := getContinuationToken(response.Links.Next)
+		if err != nil {
+			return models.GetNodesByPartialOriginResponse{}, err
+		}
+
+		response, err = c.getProviderNodeIDsByTypePage(ctx, provider, originType, continuationToken, 0)
 		if err != nil {
 			return models.GetNodesByPartialOriginResponse{}, err
 		}
@@ -405,4 +426,19 @@ func (c *client) UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) e
 	_, err := c.Do(ctx, request)
 
 	return err
+}
+
+func getContinuationToken(nextLink string) (string, error) {
+	queryValues, err := url.ParseQuery(nextLink)
+	if err != nil {
+		err = fmt.Errorf("unable to parse next Link:'%s' as an URL %w", nextLink, err)
+		return "", err
+	}
+
+	continuationToken := queryValues.Get("continuation_token")
+	if continuationToken == "" {
+		err = fmt.Errorf("expected query value continuation_token not found in next Link: %s", nextLink)
+		return "", err
+	}
+	return continuationToken, nil
 }
