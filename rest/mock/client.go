@@ -3,8 +3,8 @@ package mock
 import (
 	"context"
 
-	rest "github.com/SKF/go-hierarchy-client/rest"
-	"github.com/SKF/go-hierarchy-client/rest/models"
+	rest "github.com/SKF/go-hierarchy-v2-client/rest"
+	"github.com/SKF/go-hierarchy-v2-client/rest/models"
 
 	"github.com/SKF/go-utility/v2/uuid"
 	"github.com/stretchr/testify/mock"
@@ -30,12 +30,12 @@ func (c *HierarchyClientMock) GetNode(ctx context.Context, id uuid.UUID) (models
 	return args.Get(0).(models.Node), args.Error(1)
 }
 
-func (c *HierarchyClientMock) CreateNode(ctx context.Context, node models.WebmodelsNodeInput) (uuid.UUID, error) {
+func (c *HierarchyClientMock) CreateNode(ctx context.Context, node models.CreateNodeRequest) (models.Node, error) {
 	args := c.Called(ctx, node)
-	return args.Get(0).(uuid.UUID), args.Error(1)
+	return args.Get(0).(models.Node), args.Error(1)
 }
 
-func (c *HierarchyClientMock) UpdateNode(ctx context.Context, id uuid.UUID, node models.WebmodelsNodeInput) (models.Node, error) {
+func (c *HierarchyClientMock) UpdateNode(ctx context.Context, id uuid.UUID, node models.UpdateNodeRequest) (models.Node, error) {
 	args := c.Called(ctx, id, node)
 	return args.Get(0).(models.Node), args.Error(1)
 }
@@ -45,8 +45,8 @@ func (c *HierarchyClientMock) DeleteNode(ctx context.Context, id uuid.UUID) erro
 	return args.Error(0)
 }
 
-func (c *HierarchyClientMock) DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID) (uuid.UUID, error) {
-	args := c.Called(ctx, source, destination)
+func (c *HierarchyClientMock) DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID, suffix string) (uuid.UUID, error) {
+	args := c.Called(ctx, source, destination, suffix)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
@@ -68,6 +68,16 @@ func (c *HierarchyClientMock) GetSubtree(ctx context.Context, id uuid.UUID, filt
 func (c *HierarchyClientMock) GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error) {
 	args := c.Called(ctx, id, nodeTypes)
 	return args.Get(0).(int64), args.Error(1)
+}
+
+func (c *HierarchyClientMock) LockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
+	args := c.Called(ctx, id, recursive)
+	return args.Error(0)
+}
+
+func (c *HierarchyClientMock) UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
+	args := c.Called(ctx, id, recursive)
+	return args.Error(0)
 }
 
 func (c *HierarchyClientMock) GetOrigins(ctx context.Context, provider string) ([]models.Origin, error) {
