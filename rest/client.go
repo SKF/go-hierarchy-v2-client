@@ -408,7 +408,7 @@ func (c *client) GetOriginNodeID(ctx context.Context, origin models.Origin) (mod
 }
 
 func (c *client) LockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
-	request := rest.Put("nodes/{node}/lock?recursive={recursive}").
+	request := rest.Put("nodes/{node}/lock{?recursive}").
 		Assign("node", id).
 		Assign("recursive", recursive).
 		SetHeader("Accept", "application/json")
@@ -418,7 +418,7 @@ func (c *client) LockNode(ctx context.Context, id uuid.UUID, recursive bool) err
 	return err
 }
 func (c *client) UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
-	request := rest.Delete("nodes/{node}/lock?recursive={recursive}").
+	request := rest.Delete("nodes/{node}/lock{?recursive}").
 		Assign("node", id).
 		Assign("recursive", recursive).
 		SetHeader("Accept", "application/json")
