@@ -1,1 +1,1 @@
-# go-hierarchy-client
+# go-hierarchy-v2-client
