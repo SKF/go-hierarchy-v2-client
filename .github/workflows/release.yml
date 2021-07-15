@@ -28,5 +28,5 @@ jobs:
 
       - name: Push
         run: |
-          git push --delete origin HEAD:${GITHUB_REF}
+          git push --delete origin ${GITHUB_REF}
           git push --force origin HEAD:${GITHUB_REF}
