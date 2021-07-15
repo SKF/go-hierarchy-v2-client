@@ -27,4 +27,6 @@ jobs:
             -m "Generating files for ${GITHUB_REF/refs\/tags\//}"
 
       - name: Push
-        run: git push --force origin HEAD:${GITHUB_REF}
+        run: |
+          git push --delete origin ${GITHUB_REF}
+          git push --force origin HEAD:${GITHUB_REF}
