@@ -226,7 +226,7 @@ func (c *client) GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ..
 }
 
 func (c *client) getOriginsPage(ctx context.Context, provider, continuationToken string, limit int) (models.GetOriginsResponse, error) {
-	request := rest.Get("origin/{provider,continuation_token,limit}").
+	request := rest.Get("origins/{provider,continuation_token,limit}").
 		Assign("provider", provider).
 		Assign("continuation_token", continuationToken).
 		Assign("limit", limit).
@@ -274,7 +274,7 @@ func (c *client) GetOrigins(ctx context.Context, provider string) ([]models.Orig
 }
 
 func (c *client) getOriginsByTypePage(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetOriginsResponse, error) {
-	request := rest.Get("origin/{provider}/{type}").
+	request := rest.Get("origins/{provider}/{type}").
 		Assign("provider", provider).
 		Assign("type", originType).
 		Assign("continuation_token", continuationToken).
@@ -323,7 +323,7 @@ func (c *client) GetOriginsByType(ctx context.Context, provider, originType stri
 }
 
 func (c *client) getProviderNodeIDsPage(ctx context.Context, provider, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
-	request := rest.Get("origin/{provider}/nodes").
+	request := rest.Get("origins/{provider}/nodes").
 		Assign("provider", provider).
 		Assign("continuation_token", continuationToken).
 		Assign("limit", limit).
@@ -368,7 +368,7 @@ func (c *client) GetProviderNodeIDs(ctx context.Context, provider string) ([]uui
 }
 
 func (c *client) getProviderNodeIDsByTypePage(ctx context.Context, provider, originType, continuationToken string, limit int) (models.GetNodesByPartialOriginResponse, error) {
-	request := rest.Get("origin/{provider}/{type}/nodes").
+	request := rest.Get("origins/{provider}/{type}/nodes").
 		Assign("provider", provider).
 		Assign("type", originType).
 		Assign("continuation_token", continuationToken).
@@ -414,10 +414,14 @@ func (c *client) GetProviderNodeIDsByType(ctx context.Context, provider, originT
 }
 
 func (c *client) GetOriginNodeID(ctx context.Context, origin models.Origin) (uuid.UUID, error) {
-	request := rest.Get("origin/{provider}/{type}/{id}/nodes").
-		Assign("provider", origin.Provider).
-		Assign("type", origin.Type).
-		Assign("id", origin.ID).
+	if err := validateOriginInput(origin); err != nil {
+		return "", err
+	}
+
+	request := rest.Get("origins/{provider}/{type}/{id}/node").
+		Assign("provider", *origin.Provider).
+		Assign("type", *origin.Type).
+		Assign("id", *origin.ID).
 		SetHeader("Accept", "application/json")
 
 	var response models.GetNodeByOriginResponse
@@ -463,4 +467,12 @@ func getContinuationToken(nextLink string) (string, error) {
 	}
 
 	return continuationToken, nil
+}
+
+func validateOriginInput(origin models.Origin) error {
+	if origin.Type == nil || origin.Provider == nil || origin.ID == nil {
+		return fmt.Errorf("invalid origin one or more fields is nil")
+	}
+
+	return nil
 }
