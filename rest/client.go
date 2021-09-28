@@ -123,9 +123,9 @@ func (c *client) DeleteNode(ctx context.Context, id uuid.UUID) (err error) {
 }
 
 func (c *client) DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID, suffix string) (uuid.UUID, error) {
-	request := rest.Post("nodes/{node}/duplicate{?dstParentNodeId,label_suffix}").
+	request := rest.Post("nodes/{node}/duplicate{?destination_id,label_suffix}").
 		Assign("node", source).
-		Assign("dstParentNodeId", destination).
+		Assign("destination_id", destination).
 		Assign("label_suffix", suffix).
 		SetHeader("Accept", "application/json")
 
