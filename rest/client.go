@@ -33,6 +33,7 @@ type HierarchyClient interface {
 	GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error)
 	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error)
 	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error)
+	getSubtreePage(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error)
 
 	LockNode(ctx context.Context, id uuid.UUID, recursive bool) error
 	UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error
