@@ -70,6 +70,11 @@ func (c *HierarchyClientMock) GetSubtreeCount(ctx context.Context, id uuid.UUID,
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (c *HierarchyClientMock) GetSubtreePage(ctx context.Context, id uuid.UUID, filter rest.TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
+	args := c.Called(ctx, id, filter)
+	return args.Get(0).([]models.Node), args.Error(1)
+}
+
 func (c *HierarchyClientMock) LockNode(ctx context.Context, id uuid.UUID, recursive bool) error {
 	args := c.Called(ctx, id, recursive)
 	return args.Error(0)
