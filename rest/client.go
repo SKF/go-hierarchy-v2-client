@@ -33,6 +33,7 @@ type HierarchyClient interface {
 	GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error)
 	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error)
 	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error)
+	GetSubtreePage(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error)
 
 	LockNode(ctx context.Context, id uuid.UUID, recursive bool) error
 	UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) error
@@ -165,7 +166,7 @@ func (c *client) GetCompany(ctx context.Context, id uuid.UUID) (models.Node, err
 	return response.Node, nil
 }
 
-func (c *client) getSubtreePage(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
+func (c *client) GetSubtreePage(ctx context.Context, id uuid.UUID, filter TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
 	request := rest.Get("nodes/{node}/subtree{?depth,limit,offset,metadata_key,metadata_value,continuation_token,type*}").
 		Assign("node", id).
 		Assign("depth", filter.Depth).
@@ -187,7 +188,7 @@ func (c *client) getSubtreePage(ctx context.Context, id uuid.UUID, filter TreeFi
 }
 
 func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error) {
-	response, err := c.getSubtreePage(ctx, id, filter, "")
+	response, err := c.GetSubtreePage(ctx, id, filter, "")
 	if err != nil {
 		return []models.Node{}, err
 	}
@@ -200,7 +201,7 @@ func (c *client) GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter
 			return []models.Node{}, err
 		}
 
-		response, err = c.getSubtreePage(ctx, id, filter, continuationToken)
+		response, err = c.GetSubtreePage(ctx, id, filter, continuationToken)
 		if err != nil {
 			return []models.Node{}, err
 		}
