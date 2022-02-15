@@ -455,13 +455,13 @@ func (c *client) UnlockNode(ctx context.Context, id uuid.UUID, recursive bool) e
 }
 
 func getContinuationToken(nextLink string) (string, error) {
-	queryValues, err := url.ParseQuery(nextLink)
+	queryValues, err := url.Parse(nextLink)
 	if err != nil {
 		err = fmt.Errorf("unable to parse next Link:'%s' as an URL %w", nextLink, err)
 		return "", err
 	}
 
-	continuationToken := queryValues.Get("continuation_token")
+	continuationToken := queryValues.Query().Get("continuation_token")
 	if continuationToken == "" {
 		err = fmt.Errorf("expected query value continuation_token not found in next Link: %s", nextLink)
 		return "", err
