@@ -1,5 +1,5 @@
 .PHONY: clean
-API_URL := "https://api.sandbox.hierarchy.enlight.skf.com"
+API_URL := "https://api.sandbox.hierarchy.enlight.skf.com/v2"
 
 RM     ?= rm
 WGET   ?= wget
@@ -15,7 +15,7 @@ rest/models/: rest/swagger.json
 			generate model --spec="/src/$<" --target="/src/$@.."
 
 rest/swagger.json:
-	$(WGET) "$(API_URL)/swagger/doc.json" -O "$@"
+	$(WGET) "$(API_URL)/docs/swagger/doc.json" -O "$@"
 	./scripts/patch-skf-uuids.sh "$@"
 	./scripts/patch-x-nullable.sh "$@"
 
