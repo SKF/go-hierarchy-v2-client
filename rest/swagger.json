@@ -1856,12 +1856,8 @@
             "type": "UUID",
             "import": {
               "package": "github.com/SKF/go-utility/v2/uuid"
-            },
-            "hints": {
-              "kind": "object"
             }
           },
-          "format": "uuid",
           "example": "8f7551c5-3357-406d-ab82-bcb138d0b13f"
         },
         "position": {
