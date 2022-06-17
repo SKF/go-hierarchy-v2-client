@@ -13,7 +13,6 @@ github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/SKF/go-rest-utility v0.5.1 h1:pN/IOtI+g6875yKmunk5gfAdlQpX+vhblFcYXygQnRU=
 github.com/SKF/go-rest-utility v0.5.1/go.mod h1:SND6bqc7kbGYEN/o2+6vaf2587wHN+tmzML+lHCHKbc=
-github.com/SKF/go-utility v1.10.4 h1:/ANSV7G7cRgnjdrdMhsSY7Z5eoJibSihMBO0YQDS1ag=
 github.com/SKF/go-utility v1.10.4/go.mod h1:7gG7T9bnq8N3YViQfefxrpz/OAoME99oDkpGc/wkwhk=
 github.com/SKF/go-utility/v2 v2.2.2/go.mod h1:58mYgUJwysqzdcAploXrLQpyjJSsfTjD2C3kzk6pcuQ=
 github.com/SKF/go-utility/v2 v2.12.0 h1:LEHkzzt2K8Fb0nE2nmGY/myrdEX0jW/9QPtArOT0c5g=

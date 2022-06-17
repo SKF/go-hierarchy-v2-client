@@ -1751,17 +1751,6 @@
           "format": "uuid",
           "example": "7bcd1711-21bd-4eb7-8349-b053d6d5226f"
         },
-        "parentId": {
-          "description": "ID of parent node, as a UUID",
-          "type": "string",
-          "x-go-type": {
-            "type": "UUID",
-            "import": {
-              "package": "github.com/SKF/go-utility/v2/uuid"
-            }
-          },
-          "example": "8f7551c5-3357-406d-ab82-bcb138d0b13f"
-        },
         "industry": {
           "description": "Industry segment of this node. Only valid for site type node",
           "$ref": "#/definitions/Industry"
@@ -1820,12 +1809,16 @@
             "acceleration",
             "velocity",
             "temperature",
+            "dc",
             "dc_gap",
             "ampl_phase",
             "box",
+            "manual",
             "speed",
+            "envelope_1",
             "envelope_2",
             "envelope_3",
+            "envelope_4",
             "unknown"
           ],
           "example": "acceleration"
@@ -1855,6 +1848,17 @@
         "origin": {
           "description": "Origin of node, if imported from another system",
           "$ref": "#/definitions/Origin"
+        },
+        "parentId": {
+          "description": "ID of parent node, as a UUID",
+          "type": "string",
+          "x-go-type": {
+            "type": "UUID",
+            "import": {
+              "package": "github.com/SKF/go-utility/v2/uuid"
+            }
+          },
+          "example": "8f7551c5-3357-406d-ab82-bcb138d0b13f"
         },
         "position": {
           "description": "Relative position of node in the Enlight Centre UI",
@@ -2239,12 +2243,16 @@
             "acceleration",
             "velocity",
             "temperature",
+            "dc",
             "dc_gap",
             "ampl_phase",
             "box",
+            "manual",
             "speed",
+            "envelope_1",
             "envelope_2",
             "envelope_3",
+            "envelope_4",
             "unknown"
           ],
           "example": "acceleration"
@@ -2554,12 +2562,16 @@
             "acceleration",
             "velocity",
             "temperature",
+            "dc",
             "dc_gap",
             "ampl_phase",
             "box",
+            "manual",
             "speed",
+            "envelope_1",
             "envelope_2",
             "envelope_3",
+            "envelope_4",
             "unknown"
           ],
           "example": "acceleration"
