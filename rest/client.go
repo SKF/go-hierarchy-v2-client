@@ -30,6 +30,7 @@ type HierarchyClient interface {
 	DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID, suffix string) (uuid.UUID, error)
 
 	GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error)
+	GetAncestorsIncludeSelf(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error)
 	GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error)
 	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error)
 	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error)
@@ -48,6 +49,8 @@ type HierarchyClient interface {
 type client struct {
 	*rest.Client
 }
+
+var _ HierarchyClient = &client{}
 
 func WithStage(stage string) rest.Option {
 	if stage == stages.StageProd {

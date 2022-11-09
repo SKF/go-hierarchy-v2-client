@@ -55,6 +55,11 @@ func (c *HierarchyClientMock) GetAncestors(ctx context.Context, id uuid.UUID, he
 	return args.Get(0).([]models.Node), args.Error(1)
 }
 
+func (c *HierarchyClientMock) GetAncestorsIncludeSelf(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error) {
+	args := c.Called(ctx, id, height, nodeTypes)
+	return args.Get(0).([]models.Node), args.Error(1)
+}
+
 func (c *HierarchyClientMock) GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error) {
 	args := c.Called(ctx, id)
 	return args.Get(0).(models.Node), args.Error(1)
