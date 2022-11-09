@@ -138,10 +138,19 @@ func (c *client) DuplicateNode(ctx context.Context, source uuid.UUID, destinatio
 	return uuid.UUID(response.NewNodeID), nil
 }
 
+func (c *client) GetAncestorsIncludeSelf(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error) {
+	return c.getAncestors(ctx, id, height, true, nodeTypes...)
+}
+
 func (c *client) GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error) {
-	request := rest.Get("nodes/{node}/ancestors{?height,type*}").
+	return c.getAncestors(ctx, id, height, false, nodeTypes...)
+}
+
+func (c *client) getAncestors(ctx context.Context, id uuid.UUID, height int, includeSelf bool, nodeTypes ...string) ([]models.Node, error) {
+	request := rest.Get("nodes/{node}/ancestors{?height,includeSource,type*}").
 		Assign("node", id).
 		Assign("height", height).
+		Assign("includeSource", includeSelf).
 		Assign("type", nodeTypes).
 		SetHeader("Accept", "application/json")
 

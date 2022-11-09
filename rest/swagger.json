@@ -20,6 +20,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Create a new node. Depending on which type of node is to be created, different fields\nare mandatory. At the very least, specify the fields in the Node data type, subtype, label and parentId.",
@@ -42,13 +45,6 @@
             "schema": {
               "$ref": "#/definitions/CreateNodeRequest"
             }
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -102,6 +98,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Gets the node with the given ID",
@@ -128,13 +127,6 @@
             "description": "Node ID",
             "name": "node",
             "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
             "required": true
           }
         ],
@@ -187,6 +179,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Deletes the node with the given ID. The delete works recursively on the given nodes' children.",
@@ -213,13 +208,6 @@
             "description": "Node ID of node to remove",
             "name": "node",
             "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
             "required": true
           }
         ],
@@ -269,6 +257,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Updates the node with the given ID.",
@@ -307,13 +298,6 @@
             "description": "Node ID of node to update",
             "name": "node",
             "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
             "required": true
           }
         ],
@@ -371,6 +355,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Gets the ancestor nodes for the node with the given ID, ordered by ascending distance from the source node.",
@@ -414,13 +401,6 @@
             "description": "Node type filter",
             "name": "type",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -448,6 +428,12 @@
               "$ref": "#/definitions/problems.BasicProblem"
             }
           },
+          "404": {
+            "description": "Specified node was not found",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
           "429": {
             "description": "Too Many Requests",
             "schema": {
@@ -468,6 +454,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Gets the company node for the node with the given ID.",
@@ -494,13 +483,6 @@
             "description": "Node ID",
             "name": "node",
             "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
             "required": true
           }
         ],
@@ -529,6 +511,12 @@
               "$ref": "#/definitions/problems.BasicProblem"
             }
           },
+          "404": {
+            "description": "Specified node was not found",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
           "429": {
             "description": "Too Many Requests",
             "schema": {
@@ -549,6 +537,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Duplicates an existing node and puts it under the same parent node or a new parent if the destination_id parameter is given.",
@@ -598,13 +589,6 @@
             "description": "Node ID of new parent to the duplicate",
             "name": "destination_id",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -632,6 +616,12 @@
               "$ref": "#/definitions/problems.BasicProblem"
             }
           },
+          "404": {
+            "description": "Specified node was not found",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
           "429": {
             "description": "Too Many Requests",
             "schema": {
@@ -652,6 +642,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "This makes any update operation invalid unless it is done by the same user that locked the node.\nThe lock affects the requested node and all its descendants.",
@@ -685,13 +678,6 @@
             "description": "disable recursive locking",
             "name": "recursive",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -712,6 +698,12 @@
           },
           "403": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
+          "404": {
+            "description": "Specified node was not found",
             "schema": {
               "$ref": "#/definitions/problems.BasicProblem"
             }
@@ -740,6 +732,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Enables updates on the requested node and all its descendants.\nThis operation can only be done same user that unlocked it.",
@@ -767,13 +762,6 @@
             "name": "node",
             "in": "path",
             "required": true
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -794,6 +782,12 @@
           },
           "403": {
             "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
+          "404": {
+            "description": "Specified node was not found",
             "schema": {
               "$ref": "#/definitions/problems.BasicProblem"
             }
@@ -824,6 +818,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Gets a sub tree rooted at the node with the given ID",
@@ -897,13 +894,6 @@
             "description": "Timestamp in RFC3339 format, e.g. 2021-03-15T08:39:01Z, only return nodes modified after the specified time.",
             "name": "modified_after",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -931,6 +921,12 @@
               "$ref": "#/definitions/problems.BasicProblem"
             }
           },
+          "404": {
+            "description": "Specified node was not found",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
           "429": {
             "description": "Too Many Requests",
             "schema": {
@@ -951,6 +947,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "Gets the node count of a sub tree rooted at the node with the given ID",
@@ -988,13 +987,6 @@
             "description": "Node type filter",
             "name": "type",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1022,6 +1014,12 @@
               "$ref": "#/definitions/problems.BasicProblem"
             }
           },
+          "404": {
+            "description": "Specified node was not found",
+            "schema": {
+              "$ref": "#/definitions/problems.BasicProblem"
+            }
+          },
           "429": {
             "description": "Too Many Requests",
             "schema": {
@@ -1042,6 +1040,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "If no matching provider is found the list is empty.\nThe endpoint uses pagination, if the `next` link is set more results can be found\nby using that link for the next request.",
@@ -1074,13 +1075,6 @@
             "description": "Gets result after the continuation token provided",
             "name": "continuation_token",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1128,6 +1122,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "If no node has an origin that matches, an empty list will be returned.",
@@ -1160,13 +1157,6 @@
             "description": "Gets result after the continuation token provided",
             "name": "continuation_token",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1214,6 +1204,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "If no matching provider or provider type is found the list is empty.\nThe endpoint uses pagination, if the `next` link is set more results can be found\nby using that link for the next request.",
@@ -1253,13 +1246,6 @@
             "description": "Gets result after the continuation token provided",
             "name": "continuation_token",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1307,6 +1293,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "If no node has an origin that matches, an empty list will be returned.",
@@ -1346,13 +1335,6 @@
             "description": "Gets result after the continuation token provided",
             "name": "continuation_token",
             "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1400,6 +1382,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "produces": [
@@ -1429,13 +1414,6 @@
             "description": "Origin ID",
             "name": "id",
             "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
             "required": true
           }
         ],
@@ -1484,6 +1462,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "These values are used to populate the `assetType` field on Asset nodes.\nIf no language is provided or the provided value is unsupported the endpoint\nwill default to English.",
@@ -1507,13 +1488,6 @@
             "description": "If the supplied ETag has not changed, 304 will be returned",
             "name": "If-None-Match",
             "in": "header"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1564,6 +1538,9 @@
         "security": [
           {
             "AccessToken": []
+          },
+          {
+            "X-Client-ID": []
           }
         ],
         "description": "These values are used to populate the `industry` field on Site nodes.\nIf no language is provided or the provided value is unsupported the endpoint\nwill default to English.",
@@ -1587,13 +1564,6 @@
             "description": "If the supplied ETag has not changed, 304 will be returned",
             "name": "If-None-Match",
             "in": "header"
-          },
-          {
-            "type": "string",
-            "description": "Client ID that identifies the client",
-            "name": "X-Client-ID",
-            "in": "header",
-            "required": true
           }
         ],
         "responses": {
@@ -1856,8 +1826,12 @@
             "type": "UUID",
             "import": {
               "package": "github.com/SKF/go-utility/v2/uuid"
+            },
+            "hints": {
+              "kind": "object"
             }
           },
+          "format": "uuid",
           "example": "8f7551c5-3357-406d-ab82-bcb138d0b13f"
         },
         "position": {
@@ -2290,8 +2264,12 @@
             "type": "UUID",
             "import": {
               "package": "github.com/SKF/go-utility/v2/uuid"
+            },
+            "hints": {
+              "kind": "object"
             }
           },
+          "format": "uuid",
           "example": "8f7551c5-3357-406d-ab82-bcb138d0b13f"
         },
         "position": {
@@ -2609,8 +2587,12 @@
             "type": "UUID",
             "import": {
               "package": "github.com/SKF/go-utility/v2/uuid"
+            },
+            "hints": {
+              "kind": "object"
             }
           },
+          "format": "uuid",
           "example": "8f7551c5-3357-406d-ab82-bcb138d0b13f"
         },
         "position": {
@@ -2800,6 +2782,11 @@
     "AccessToken": {
       "type": "apiKey",
       "name": "Authorization",
+      "in": "header"
+    },
+    "X-Client-ID": {
+      "type": "apiKey",
+      "name": "X-Client-ID",
       "in": "header"
     }
   },
