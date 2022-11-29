@@ -33,7 +33,7 @@ func Test_client_getAncestors(t *testing.T) {
 	}
 }
 
-func getToken(t *testing.T, stage string) string {
+func getToken(t *testing.T, stage string) string { //nolint: unused
 	tokenBytes, err := exec.Command("gob", "tokens", "-pis", stage).Output()
 	require.NoError(t, err)
 
