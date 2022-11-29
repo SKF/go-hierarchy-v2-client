@@ -30,6 +30,7 @@ type HierarchyClient interface {
 	DuplicateNode(ctx context.Context, source uuid.UUID, destination uuid.UUID, suffix string) (uuid.UUID, error)
 
 	GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error)
+	GetAncestorsIncludeSelf(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error)
 	GetCompany(ctx context.Context, id uuid.UUID) (models.Node, error)
 	GetSubtree(ctx context.Context, id uuid.UUID, filter TreeFilter) ([]models.Node, error)
 	GetSubtreeCount(ctx context.Context, id uuid.UUID, nodeTypes ...string) (int64, error)
@@ -48,6 +49,8 @@ type HierarchyClient interface {
 type client struct {
 	*rest.Client
 }
+
+var _ HierarchyClient = &client{}
 
 func WithStage(stage string) rest.Option {
 	if stage == stages.StageProd {
@@ -138,10 +141,19 @@ func (c *client) DuplicateNode(ctx context.Context, source uuid.UUID, destinatio
 	return uuid.UUID(response.NewNodeID), nil
 }
 
+func (c *client) GetAncestorsIncludeSelf(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error) {
+	return c.getAncestors(ctx, id, height, true, nodeTypes...)
+}
+
 func (c *client) GetAncestors(ctx context.Context, id uuid.UUID, height int, nodeTypes ...string) ([]models.Node, error) {
-	request := rest.Get("nodes/{node}/ancestors{?height,type*}").
+	return c.getAncestors(ctx, id, height, false, nodeTypes...)
+}
+
+func (c *client) getAncestors(ctx context.Context, id uuid.UUID, height int, includeSelf bool, nodeTypes ...string) ([]models.Node, error) {
+	request := rest.Get("nodes/{node}/ancestors{?height,includeSelf,type*}").
 		Assign("node", id).
 		Assign("height", height).
+		Assign("includeSelf", includeSelf).
 		Assign("type", nodeTypes).
 		SetHeader("Accept", "application/json")
 

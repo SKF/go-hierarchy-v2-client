@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	hierarchy "github.com/SKF/go-hierarchy-v2-client/rest"
 	"github.com/SKF/go-rest-utility/client"
 	"github.com/SKF/go-rest-utility/client/auth"
 	"github.com/SKF/go-utility/v2/auth/secretsmanagerauth"
 	"github.com/SKF/go-utility/v2/stages"
+
+	hierarchy "github.com/SKF/go-hierarchy-v2-client/rest"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
