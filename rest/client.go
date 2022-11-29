@@ -150,10 +150,10 @@ func (c *client) GetAncestors(ctx context.Context, id uuid.UUID, height int, nod
 }
 
 func (c *client) getAncestors(ctx context.Context, id uuid.UUID, height int, includeSelf bool, nodeTypes ...string) ([]models.Node, error) {
-	request := rest.Get("nodes/{node}/ancestors{?height,includeSource,type*}").
+	request := rest.Get("nodes/{node}/ancestors{?height,includeSelf,type*}").
 		Assign("node", id).
 		Assign("height", height).
-		Assign("includeSource", includeSelf).
+		Assign("includeSelf", includeSelf).
 		Assign("type", nodeTypes).
 		SetHeader("Accept", "application/json")
 
