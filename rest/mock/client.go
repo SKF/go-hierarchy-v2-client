@@ -76,7 +76,7 @@ func (c *HierarchyClientMock) GetSubtreeCount(ctx context.Context, id uuid.UUID,
 }
 
 func (c *HierarchyClientMock) GetSubtreePage(ctx context.Context, id uuid.UUID, filter rest.TreeFilter, continuationToken string) (models.GetSubtreeResponse, error) {
-	args := c.Called(ctx, id, filter)
+	args := c.Called(ctx, id, filter, continuationToken)
 	return args.Get(0).(models.GetSubtreeResponse), args.Error(1)
 }
 
