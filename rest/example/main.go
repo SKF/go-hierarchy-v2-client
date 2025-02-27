@@ -20,6 +20,7 @@ const (
 	clientID    = "2e51739d-61e8-4c34-bdbc-de0cd4b53dfe" //random uuid in example
 	serviceName = "example-service"
 	awsRegion   = "eu-west-1"
+	exmapleArn  = "arn:aws:secretsmanager:<Region>:<AccountId>:secret:SecretName-6RandomCharacters"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 		client.WithDatadogTracing(dd_http.RTWithServiceName(serviceName)),
 		client.WithTokenProvider(&auth.SecretCredentialsTokenProvider{
 			SecretsClient: auth.SecretsManagerV2Client{Client: secretsmanager.NewFromConfig(cfg)},
-			SecretID:      fmt.Sprintf("arn:aws:secretsmanager:%s633888256817:secret:user-credentials/%s-xX66Xx", awsRegion, serviceName),
+			SecretID:      exmapleArn,
 		}),
 	)
 
