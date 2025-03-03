@@ -13,13 +13,13 @@ import (
 )
 
 type TreeFilter struct {
+	MetadataKey   string
+	MetadataValue string
+	ModifiedAfter string
+	NodeTypes     []string
 	Depth         int
 	Limit         int
 	Offset        int
-	MetadataKey   string
-	MetadataValue string
-	NodeTypes     []string
-	ModifiedAfter string
 }
 
 type HierarchyClient interface {
